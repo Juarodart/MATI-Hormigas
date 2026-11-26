@@ -13,6 +13,8 @@ Trabajo sobre el artículo:
 ```
 MATI-Hormigas/
 ├── README.md                  ← esta portada
+├── index.html                 ← aplicación web interactiva (ver sección siguiente)
+├── css/  js/                  ← estilos y código de la app (MVC)
 ├── docs/
 │   ├── guion.md               ← guion de la exposición, reparto y preguntas
 │   ├── bibliografia.md        ← referencias (rúbrica: Bibliografía)
@@ -20,6 +22,28 @@ MATI-Hormigas/
 │   └── diapositivas/          ← presentación (rúbrica: Exposición)           [pendiente]
 └── .gitignore
 ```
+
+## Aplicación interactiva
+
+Simulación en el navegador del Ant System del artículo aplicado al TSP. Se ejecuta abriendo `index.html`
+(HTML/CSS/JS puros, sin instalación). La ayuda con las fórmulas en LaTeX usa KaTeX desde CDN, por lo que
+necesita conexión a internet; sin ella se muestra el código LaTeX.
+
+- **Algoritmos:** ANT-quantity, ANT-density y ANT-cycle (ecuaciones 3, 4 y 5 del artículo).
+- **Parámetros:** número de hormigas *m*, α, β y ρ (ρ = fracción de rastro que persiste, como en el artículo).
+  Al elegir algoritmo se cargan los parámetros del artículo; α, β y ρ se pueden cambiar en vivo.
+- **Problemas:** cuadrículas 4×4, 5×5 y 6×6, 10 ciudades, Oliver30 (las 30 ciudades de la Fig. 3) y dos aleatorios.
+- **Visualización:** hormigas animadas y rastro de feromonas dinámico, con velocidad ajustable (modo Turbo).
+- **Panel inferior:** longitud del mejor tour frente a ciclos (réplica de la Fig. 3) y comparación de los
+  tres algoritmos superpuestos.
+- **Botón `?`:** fórmulas en LaTeX, explicación de parámetros y código LaTeX copiable.
+
+Arquitectura MVC: `js/model/` (algoritmo e instancias), `js/view/` (escenario, gráfica, controles, ayuda)
+y `js/controller/` (bucle de animación y eventos).
+
+> **Nota:** la instancia «10 ciudades (tipo CCAO)» usa coordenadas de sustitución, no las originales de
+> Golden y Stewart. Las ecuaciones (3) y (4) del artículo contradicen el texto de la sección 4 sobre
+> quantity y density; la app sigue las ecuaciones.
 
 ## Rúbrica → dónde se cubre
 

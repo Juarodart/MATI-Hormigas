@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Colonia de hormigas · Ant System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <h1>Optimización distribuida por colonias de hormigas</h1>
+        <p class="sub">Ant System aplicado al TSP · Colorni, Dorigo y Maniezzo (ECAL91)</p>
+      </div>
+      <button id="btn-help" class="icon-btn" type="button" aria-label="Abrir ayuda sobre los parámetros" title="Ayuda">?</button>
+    </header>
+
+    <!-- ASIDE LATERAL: algoritmo, problema, parámetros, ejecución -->
+    <aside class="sidebar" aria-label="Controles de la simulación">
+      <section class="group">
+        <h2>Algoritmo</h2>
+        <div class="algos" role="radiogroup" aria-label="Algoritmo">
+          <label class="algo"><input type="radio" name="algo" value="quantity" checked>
+            <span><b>ANT-quantity</b><small>Δτ = Q/dij · paso a paso</small></span></label>
+          <label class="algo"><input type="radio" name="algo" value="density">
+            <span><b>ANT-density</b><small>Δτ = Q · paso a paso</small></span></label>
+          <label class="algo"><input type="radio" name="algo" value="cycle">
+            <span><b>ANT-cycle</b><small>Δτ = Q/Lk · al cerrar el ciclo</small></span></label>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2><label for="sel-instance">Cuadrícula / problema</label></h2>
+        <select id="sel-instance"></select>
+      </section>
+
+      <section class="group">
+        <h2>Parámetros</h2>
+        <div class="slider"><label for="rng-m">Hormigas <i>m</i></label><output id="out-m">16</output>
+          <input id="rng-m" type="range" min="1" max="64" step="1" value="16"></div>
+        <div class="slider"><label for="rng-alpha">Rastro <i>α</i></label><output id="out-alpha">2.0</output>
+          <input id="rng-alpha" type="range" min="0" max="10" step="0.5" value="2"></div>
+        <div class="slider"><label for="rng-beta">Distancia <i>β</i></label><output id="out-beta">5.0</output>
+          <input id="rng-beta" type="range" min="0" max="10" step="0.5" value="5"></div>
+        <div class="slider"><label for="rng-rho">Persistencia <i>ρ</i></label><output id="out-rho">0.70</output>
+          <input id="rng-rho" type="range" min="0.1" max="0.99" step="0.01" value="0.7"></div>
+      </section>
+
+      <section class="group">
+        <h2>Ejecución</h2>
+        <div class="btns">
+          <button id="btn-start" class="btn primary" type="button">▶ Inicio</button>
+          <button id="btn-pause" class="btn" type="button" disabled>⏸ Pausa</button>
+          <button id="btn-resume" class="btn" type="button" disabled>⏵ Reanudar</button>
+          <button id="btn-reset" class="btn ghost" type="button">↺ Reiniciar</button>
+        </div>
+        <div class="slider"><label for="rng-speed">Velocidad</label><output id="out-speed">Media</output>
+          <input id="rng-speed" type="range" min="0" max="4" step="1" value="2"></div>
+        <div class="row">
+          <label for="inp-seed">Semilla</label>
+          <input id="inp-seed" type="number" min="0" step="1" value="1">
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite" data-state="idle">Listo</p>
+      </section>
+    </aside>
+
+    <!-- CENTRO: animación -->
+    <main class="stage" aria-label="Animación de la colonia">
+      <div class="stage-bar">
+        <span id="hud" class="hud">Ciclo 0 · paso 0/16</span>
+        <div class="toggles">
+          <label><input type="checkbox" id="tog-pheromone" checked> Feromonas</label>
+          <label><input type="checkbox" id="tog-ants" checked> Hormigas</label>
+          <label><input type="checkbox" id="tog-best" checked> Mejor tour</label>
+        </div>
+      </div>
+      <div class="canvas-wrap"><canvas id="stage-canvas" aria-label="Ciudades, hormigas y rastro de feromonas"></canvas></div>
+    </main>
+
+    <!-- PANEL INFERIOR: réplica Fig. 3 -->
+    <section class="bottom" aria-label="Comparativa de resultados">
+      <div class="bottom-head">
+        <div class="seg" role="group" aria-label="Modo de gráfica">
+          <button id="mode-run" type="button" aria-pressed="true">Ejecución actual</button>
+          <button id="mode-compare" type="button" aria-pressed="false">Comparar algoritmos</button>
+        </div>
+        <label class="inline" for="inp-cycles">Ciclos <input id="inp-cycles" type="number" min="10" max="5000" step="10" value="500"></label>
+        <button id="btn-compare" class="btn small" type="button">Ejecutar los 3</button>
+        <progress id="cmp-progress" max="1" value="0" hidden></progress>
+        <ul id="legend" class="legend" aria-label="Leyenda"></ul>
+      </div>
+      <div class="bottom-body">
+        <div class="chart-wrap"><canvas id="chart-canvas" aria-label="Longitud del tour frente a ciclos"></canvas></div>
+        <dl class="stats">
+          <div><dt>Ciclo</dt><dd id="st-cycle">0</dd></div>
+          <div><dt>Mejor longitud</dt><dd id="st-best">—</dd></div>
+          <div><dt>Óptimo</dt><dd id="st-opt">—</dd></div>
+          <div><dt>Desvío</dt><dd id="st-gap">—</dd></div>
+          <div><dt>Hallado en</dt><dd id="st-found">—</dd></div>
+          <div><dt>Último ciclo (mín / media)</dt><dd id="st-last">—</dd></div>
+        </dl>
+      </div>
+    </section>
+  </div>
+
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <div class="dlg-head"><h2 id="help-title">Ayuda y explicación de parámetros</h2>
+      <button id="btn-help-close" class="icon-btn" type="button" aria-label="Cerrar ayuda">×</button></div>
+    <div class="tabs" role="tablist">
+      <button id="tab-fml" class="tab" role="tab" aria-selected="true" type="button">Fórmulas</button>
+      <button id="tab-txt" class="tab" role="tab" aria-selected="false" type="button">Parámetros y controles</button>
+      <button id="tab-tex" class="tab" role="tab" aria-selected="false" type="button">Código LaTeX</button>
+    </div>
+    <div id="help-formulas" class="help-pane" role="tabpanel"></div>
+    <textarea id="help-text" class="help-pane" readonly hidden aria-label="Texto de ayuda"></textarea>
+    <textarea id="help-tex" class="help-pane" readonly hidden aria-label="Código LaTeX de las fórmulas"></textarea>
+  </dialog>
+
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script src="js/model/instances.js"></script>
+  <script src="js/model/antSystem.js"></script>
+  <script src="js/view/stageView.js"></script>
+  <script src="js/view/chartView.js"></script>
+  <script src="js/view/helpFormulas.js"></script>
+  <script src="js/view/controlsView.js"></script>
+  <script src="js/controller/appController.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
