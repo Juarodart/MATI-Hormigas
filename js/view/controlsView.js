@@ -36,6 +36,15 @@
     '• Velocidad: el último nivel (Turbo) no anima hormigas y calcula varios ciclos por fotograma.',
     '• Semilla: mismo valor + mismos parámetros = misma ejecución (reproducible).',
     '',
+    'EXPERIMENTO DEL OBSTÁCULO (Fig. 1 del artículo)',
+    '• En el selector «Experimento» elige «Obstáculo (Fig. 1)». Las hormigas van del hormiguero a la comida y vuelven (las que vuelven llevan una miga verde).',
+    '• Al principio hay un camino directo. Pulsa «Colocar obstáculo»: la roca corta el directo y quedan dos rodeos, uno corto (arriba) y uno largo (abajo). «Rodeo largo ×» fija cuánto más largo es.',
+    '• Por el rodeo corto las hormigas vuelven antes, así que lo refuerzan más veces por unidad de tiempo y aumenta la probabilidad de que las siguientes lo elijan (autocatálisis). Es la idea que justifica todo el algoritmo.',
+    '• Usa el mismo selector de algoritmo, que aquí cambia cómo se deposita la feromona: density = cantidad constante por recorrido; quantity = más cuanto más corta es la arista (Q/d); cycle = al volver al hormiguero, cada hormiga deposita Q/L en todas las aristas de su viaje (L = longitud del viaje completo).',
+    '• Con α = 2 y rodeo ×1,8, ANT-quantity y ANT-cycle acaban usando el rodeo corto en ≈ 97 % de las ejecuciones; ANT-density, que solo se apoya en el tiempo, lo hace de forma bastante menos fiable (≈ 60–70 %). Con ×1,0 (rodeos iguales) la colonia elige uno al azar.',
+    '• Aquí β no se usa (no hay visibilidad) y ρ es la persistencia por segundo. Velocidad = ritmo de la simulación. La gráfica muestra el % de las últimas 30 hormigas que eligieron el rodeo corto y el % de feromona que hay en él.',
+    '• Si quitas el obstáculo, la colonia casi nunca vuelve al camino directo: el rastro es memoria, pero también puede atrapar. Es la razón de que el artículo diga que hace falta mantener cierta exploración.',
+    '',
     'PANEL INFERIOR (réplica de la Fig. 3)',
     '• «Ejecución actual»: mejor global, mejor del ciclo y media del ciclo vs. ciclos. La línea roja discontinua es el óptimo conocido (16 en 4×4, 423,74 en Oliver30).',
     '• «Comparar algoritmos»: superpone el mejor global de la última ejecución de cada algoritmo. El botón «Ejecutar los 3» los lanza seguidos (sin animación) con los α, β, ρ, m y ciclos actuales.',
@@ -59,7 +68,13 @@
         modeRun: $('mode-run'), modeCmp: $('mode-compare'), btnCompare: $('btn-compare'), cmpProgress: $('cmp-progress'),
         status: $('status'), hud: $('hud'), legend: $('legend'),
         statCycle: $('st-cycle'), statBest: $('st-best'), statOpt: $('st-opt'), statGap: $('st-gap'),
-        statFound: $('st-found'), statLast: $('st-last')
+        statFound: $('st-found'), statLast: $('st-last'),
+        expRadios: document.querySelectorAll('input[name="exp"]'),
+        secObstacle: $('sec-obstacle'), secAlgo: $('sec-algo'), secInstance: $('sec-instance'),
+        btnObstacle: $('btn-obstacle'), ratio: $('rng-ratio'), outRatio: $('out-ratio'),
+        rowBeta: $('row-beta'), labRho: $('lab-rho'), labBest: $('lab-best'), tspTools: $('tsp-tools'), obsTitle: $('obs-title'),
+        statsTsp: $('stats-tsp'), statsObs: $('stats-obs'),
+        soT: $('so-t'), soBlock: $('so-block'), soDi: $('so-di'), soUp: $('so-up'), soLo: $('so-lo'), soPct: $('so-pct'), soPher: $('so-pher')
       };
       this.el.helpText.value = HELP_TEXT;
       const panes = { 'tab-fml': $('help-formulas'), 'tab-txt': $('help-text'), 'tab-tex': $('help-tex') };
@@ -89,7 +104,38 @@
       if (p.rho != null) { e.rho.value = p.rho; e.outRho.textContent = (+p.rho).toFixed(2); }
     }
 
-    setMRange(max) { this.el.m.max = Math.max(max * 2, 8); }
+    // 'tsp' | 'obstacle': muestra/oculta los controles de cada experimento
+    setExp(exp) {
+      const e = this.el, obs = exp === 'obstacle';
+      e.expRadios.forEach(r => { r.checked = r.value === exp; });
+      e.secObstacle.hidden = !obs; e.secInstance.hidden = obs;
+      e.rowBeta.classList.toggle('off', obs); e.beta.disabled = obs;
+      e.labBest.hidden = obs; e.tspTools.hidden = obs; e.obsTitle.hidden = !obs;
+      e.statsTsp.hidden = obs; e.statsObs.hidden = !obs;
+      e.labRho.innerHTML = obs ? 'Persistencia <i>ρ</i> (por s)' : 'Persistencia <i>ρ</i>';
+      e.legend.innerHTML = '';
+    }
+
+    setObstacleButton(blocked) {
+      const b = this.el.btnObstacle;
+      b.textContent = blocked ? '↩ Quitar obstáculo' : '🪨 Colocar obstáculo';
+      b.setAttribute('aria-pressed', blocked);
+    }
+
+    setRatio(r) { this.el.ratio.value = r; this.el.outRatio.textContent = (+r).toFixed(1); }
+
+    renderObstacleStats(st) {
+      const e = this.el, pc = v => v == null ? '—' : Math.round(v) + ' %';
+      e.soT.textContent = Math.floor(st.t) + ' s';
+      e.soBlock.textContent = st.blocked ? 'sí' : 'no';
+      e.soDi.textContent = st.di; e.soUp.textContent = st.up; e.soLo.textContent = st.lo;
+      e.soPct.textContent = pc(st.pctShort); e.soPher.textContent = pc(st.pctPher);
+      e.hud.textContent = st.blocked
+        ? 't = ' + Math.floor(st.t) + ' s · rodeo corto: ' + pc(st.pctShort) + ' de las últimas ' + st.nWindow + ' decisiones'
+        : 't = ' + Math.floor(st.t) + ' s · sin obstáculo: siguen el camino directo. Pulsa «Colocar obstáculo»';
+    }
+
+    setMRange(max) { this.el.m.max = Math.max(max * 2, 64); } // el artículo prueba hasta 64 hormigas
 
     setSpeedLabel(txt) { this.el.outSpeed.textContent = txt; }
 

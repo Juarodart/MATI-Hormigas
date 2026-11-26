@@ -15,6 +15,7 @@ MATI-Hormigas/
 ├── README.md                  ← esta portada
 ├── index.html                 ← aplicación web interactiva (ver sección siguiente)
 ├── css/  js/                  ← estilos y código de la app (MVC)
+├── ACO_Ant_System_SageMath.ipynb ← implementación en SageMath
 ├── docs/
 │   ├── guion.md               ← guion de la exposición, reparto y preguntas
 │   ├── bibliografia.md        ← referencias (rúbrica: Bibliografía)
@@ -33,7 +34,11 @@ necesita conexión a internet; sin ella se muestra el código LaTeX.
 - **Parámetros:** número de hormigas *m*, α, β y ρ (ρ = fracción de rastro que persiste, como en el artículo).
   Al elegir algoritmo se cargan los parámetros del artículo; α, β y ρ se pueden cambiar en vivo.
 - **Problemas:** cuadrículas 4×4, 5×5 y 6×6, 10 ciudades, Oliver30 (las 30 ciudades de la Fig. 3) y dos aleatorios.
-- **Visualización:** hormigas animadas y rastro de feromonas dinámico, con velocidad ajustable (modo Turbo).
+- **Visualización:** hormigas dibujadas con patas animadas y rastro de feromonas con flujo, con velocidad ajustable (modo Turbo).
+- **Experimento del obstáculo (Fig. 1 del artículo):** modo alternativo (selector «Experimento»). Las hormigas van del
+  hormiguero a la comida; al colocar una roca en medio quedan un rodeo corto y otro largo (ajustable) y se ve cómo la
+  colonia acaba usando el corto. Los tres algoritmos cambian cómo se deposita la feromona; la gráfica muestra el % de
+  hormigas que elige el rodeo corto y el % de feromona en él. Simulación en tiempo continuo (`js/model/obstacleSim.js`).
 - **Panel inferior:** longitud del mejor tour frente a ciclos (réplica de la Fig. 3) y comparación de los
   tres algoritmos superpuestos.
 - **Botón `?`:** fórmulas en LaTeX, explicación de parámetros y código LaTeX copiable.

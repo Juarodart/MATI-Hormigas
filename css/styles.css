@@ -117,3 +117,13 @@ textarea.help-pane { font: 13px/1.55 ui-monospace, Menlo, Consolas, monospace; }
   .bottom-body { grid-template-columns: 1fr; }
   .chart-wrap { height: 200px; }
 }
+
+/* experimento del obstáculo */
+.exps { display: grid; gap: 6px; }
+.btn.full { width: 100%; margin-bottom: 10px; }
+.btn[aria-pressed=true] { background: #fff7ed; border-color: var(--accent); color: var(--accent); }
+.hint { color: var(--muted); font-size: 12px; line-height: 1.4; margin-top: 4px; }
+.tsp-tools { display: contents; }
+.obs-title { font-size: 13px; }
+.slider.off { opacity: .4; }
+[hidden] { display: none !important; }

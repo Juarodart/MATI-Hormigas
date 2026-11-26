@@ -20,6 +20,24 @@
     <!-- ASIDE LATERAL: algoritmo, problema, parámetros, ejecución -->
     <aside class="sidebar" aria-label="Controles de la simulación">
       <section class="group">
+        <h2>Experimento</h2>
+        <div class="exps" role="radiogroup" aria-label="Experimento">
+          <label class="algo"><input type="radio" name="exp" value="tsp" checked>
+            <span><b>Viajante (TSP)</b><small>Tour más corto por todas las ciudades</small></span></label>
+          <label class="algo"><input type="radio" name="exp" value="obstacle">
+            <span><b>Obstáculo (Fig. 1)</b><small>Del hormiguero a la comida, con una roca en medio</small></span></label>
+        </div>
+      </section>
+
+      <section class="group" id="sec-obstacle" hidden>
+        <h2>Obstáculo</h2>
+        <button id="btn-obstacle" class="btn full" type="button" aria-pressed="false">🪨 Colocar obstáculo</button>
+        <div class="slider"><label for="rng-ratio">Rodeo largo <i>×</i></label><output id="out-ratio">1.8</output>
+          <input id="rng-ratio" type="range" min="1" max="2.5" step="0.1" value="1.8"></div>
+        <p class="hint">Deja que las hormigas marquen el camino directo, coloca la roca y mira qué rodeo acaba usando la colonia. Con ×1,0 los dos rodeos miden lo mismo: elige uno al azar.</p>
+      </section>
+
+      <section class="group" id="sec-algo">
         <h2>Algoritmo</h2>
         <div class="algos" role="radiogroup" aria-label="Algoritmo">
           <label class="algo"><input type="radio" name="algo" value="quantity" checked>
@@ -31,7 +49,7 @@
         </div>
       </section>
 
-      <section class="group">
+      <section class="group" id="sec-instance">
         <h2><label for="sel-instance">Cuadrícula / problema</label></h2>
         <select id="sel-instance"></select>
       </section>
@@ -42,9 +60,9 @@
           <input id="rng-m" type="range" min="1" max="64" step="1" value="16"></div>
         <div class="slider"><label for="rng-alpha">Rastro <i>α</i></label><output id="out-alpha">2.0</output>
           <input id="rng-alpha" type="range" min="0" max="10" step="0.5" value="2"></div>
-        <div class="slider"><label for="rng-beta">Distancia <i>β</i></label><output id="out-beta">5.0</output>
+        <div class="slider" id="row-beta"><label for="rng-beta">Distancia <i>β</i></label><output id="out-beta">5.0</output>
           <input id="rng-beta" type="range" min="0" max="10" step="0.5" value="5"></div>
-        <div class="slider"><label for="rng-rho">Persistencia <i>ρ</i></label><output id="out-rho">0.70</output>
+        <div class="slider"><label for="rng-rho" id="lab-rho">Persistencia <i>ρ</i></label><output id="out-rho">0.70</output>
           <input id="rng-rho" type="range" min="0.1" max="0.99" step="0.01" value="0.7"></div>
       </section>
 
@@ -73,7 +91,7 @@
         <div class="toggles">
           <label><input type="checkbox" id="tog-pheromone" checked> Feromonas</label>
           <label><input type="checkbox" id="tog-ants" checked> Hormigas</label>
-          <label><input type="checkbox" id="tog-best" checked> Mejor tour</label>
+          <label id="lab-best"><input type="checkbox" id="tog-best" checked> Mejor tour</label>
         </div>
       </div>
       <div class="canvas-wrap"><canvas id="stage-canvas" aria-label="Ciudades, hormigas y rastro de feromonas"></canvas></div>
@@ -82,24 +100,36 @@
     <!-- PANEL INFERIOR: réplica Fig. 3 -->
     <section class="bottom" aria-label="Comparativa de resultados">
       <div class="bottom-head">
-        <div class="seg" role="group" aria-label="Modo de gráfica">
-          <button id="mode-run" type="button" aria-pressed="true">Ejecución actual</button>
-          <button id="mode-compare" type="button" aria-pressed="false">Comparar algoritmos</button>
+        <div class="tsp-tools" id="tsp-tools">
+          <div class="seg" role="group" aria-label="Modo de gráfica">
+            <button id="mode-run" type="button" aria-pressed="true">Ejecución actual</button>
+            <button id="mode-compare" type="button" aria-pressed="false">Comparar algoritmos</button>
+          </div>
+          <label class="inline" for="inp-cycles">Ciclos <input id="inp-cycles" type="number" min="10" max="5000" step="10" value="500"></label>
+          <button id="btn-compare" class="btn small" type="button">Ejecutar los 3</button>
+          <progress id="cmp-progress" max="1" value="0" hidden></progress>
         </div>
-        <label class="inline" for="inp-cycles">Ciclos <input id="inp-cycles" type="number" min="10" max="5000" step="10" value="500"></label>
-        <button id="btn-compare" class="btn small" type="button">Ejecutar los 3</button>
-        <progress id="cmp-progress" max="1" value="0" hidden></progress>
+        <strong id="obs-title" class="obs-title" hidden>Uso de cada rodeo tras colocar el obstáculo</strong>
         <ul id="legend" class="legend" aria-label="Leyenda"></ul>
       </div>
       <div class="bottom-body">
         <div class="chart-wrap"><canvas id="chart-canvas" aria-label="Longitud del tour frente a ciclos"></canvas></div>
-        <dl class="stats">
+        <dl class="stats" id="stats-tsp">
           <div><dt>Ciclo</dt><dd id="st-cycle">0</dd></div>
           <div><dt>Mejor longitud</dt><dd id="st-best">—</dd></div>
           <div><dt>Óptimo</dt><dd id="st-opt">—</dd></div>
           <div><dt>Desvío</dt><dd id="st-gap">—</dd></div>
           <div><dt>Hallado en</dt><dd id="st-found">—</dd></div>
           <div><dt>Último ciclo (mín / media)</dt><dd id="st-last">—</dd></div>
+        </dl>
+        <dl class="stats" id="stats-obs" hidden>
+          <div><dt>Tiempo</dt><dd id="so-t">0 s</dd></div>
+          <div><dt>Obstáculo</dt><dd id="so-block">no</dd></div>
+          <div><dt>En el camino directo</dt><dd id="so-di">0</dd></div>
+          <div><dt>En el rodeo corto</dt><dd id="so-up">0</dd></div>
+          <div><dt>En el rodeo largo</dt><dd id="so-lo">0</dd></div>
+          <div><dt>Eligen el corto (últ. 30)</dt><dd id="so-pct">—</dd></div>
+          <div><dt>Feromona en el corto</dt><dd id="so-pher">—</dd></div>
         </dl>
       </div>
     </section>
@@ -121,7 +151,10 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
   <script src="js/model/instances.js"></script>
   <script src="js/model/antSystem.js"></script>
+  <script src="js/model/obstacleSim.js"></script>
+  <script src="js/view/antSprite.js"></script>
   <script src="js/view/stageView.js"></script>
+  <script src="js/view/obstacleView.js"></script>
   <script src="js/view/chartView.js"></script>
   <script src="js/view/helpFormulas.js"></script>
   <script src="js/view/controlsView.js"></script>
